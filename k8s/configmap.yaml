@@ -1,0 +1,34 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ecommerce-config
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/part-of: ecommerce-platform
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka.ecommerce.svc.cluster.local:9092"
+  SPRING_PROFILES_ACTIVE: "k8s"
+  POSTGRES_ORDERS_HOST: "postgres-orders.ecommerce.svc.cluster.local"
+  POSTGRES_ORDERS_PORT: "5432"
+  POSTGRES_ORDERS_DB: "orders_db"
+  POSTGRES_PAYMENTS_HOST: "postgres-payments.ecommerce.svc.cluster.local"
+  POSTGRES_PAYMENTS_PORT: "5432"
+  POSTGRES_PAYMENTS_DB: "payments_db"
+  MONGODB_HOST: "mongodb.ecommerce.svc.cluster.local"
+  MONGODB_PORT: "27017"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ecommerce-secrets
+  namespace: ecommerce
+  labels:
+    app.kubernetes.io/part-of: ecommerce-platform
+type: Opaque
+stringData:
+  POSTGRES_ORDERS_USER: "orders_user"
+  POSTGRES_ORDERS_PASSWORD: "orders_pass"
+  POSTGRES_PAYMENTS_USER: "payments_user"
+  POSTGRES_PAYMENTS_PASSWORD: "payments_pass"
+  MONGODB_ROOT_USER: "root"
+  MONGODB_ROOT_PASSWORD: "rootpass"
