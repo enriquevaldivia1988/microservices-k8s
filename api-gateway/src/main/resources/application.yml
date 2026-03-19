@@ -1,0 +1,101 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: order-service
+          uri: http://order-service:8081
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - RewritePath=/api/orders/(?<segment>.*), /api/orders/${segment}
+            - name: CircuitBreaker
+              args:
+                name: orderServiceCircuitBreaker
+                fallbackUri: forward:/fallback/orders
+
+        - id: product-service
+          uri: http://product-service:8082
+          predicates:
+            - Path=/api/products/**
+          filters:
+            - RewritePath=/api/products/(?<segment>.*), /api/products/${segment}
+            - name: CircuitBreaker
+              args:
+                name: productServiceCircuitBreaker
+                fallbackUri: forward:/fallback/products
+
+        - id: payment-service
+          uri: http://payment-service:8083
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - RewritePath=/api/payments/(?<segment>.*), /api/payments/${segment}
+            - name: CircuitBreaker
+              args:
+                name: paymentServiceCircuitBreaker
+                fallbackUri: forward:/fallback/payments
+
+        - id: notification-service
+          uri: http://notification-service:8084
+          predicates:
+            - Path=/api/notifications/**
+          filters:
+            - RewritePath=/api/notifications/(?<segment>.*), /api/notifications/${segment}
+            - name: CircuitBreaker
+              args:
+                name: notificationServiceCircuitBreaker
+                fallbackUri: forward:/fallback/notifications
+
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 10
+            redis-rate-limiter.burstCapacity: 20
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      orderServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+      productServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+      paymentServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+      notificationServiceCircuitBreaker:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 3
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
